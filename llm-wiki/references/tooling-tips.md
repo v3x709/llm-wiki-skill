@@ -6,56 +6,92 @@ Practical setup and usage notes for the LLM Wiki stack.
 
 ### Essential settings
 
-1. **Attachment folder**: Settings → Files and links → "Attachment folder path" → set to `raw/assets/`
-2. **Download images**: Settings → Hotkeys → search "Download attachments" → bind to Ctrl+Shift+D  
-   After clipping an article, hit the hotkey to download all images locally.
-3. **New file location**: Settings → Files and links → "Default location for new notes" → set to `wiki/concepts/`
+1. **Attachment folder**: Settings → Files and links → "Attachment folder path" → `raw/assets/`.
+2. **New file location**: Settings → Files and links → "Default location for new notes" → `wiki/concepts/`.
+3. **Download attachments hotkey**: Settings → Hotkeys → search "Download attachments" → bind to `Ctrl+Shift+D`. After clipping an article, hit the hotkey to download all images locally.
 
 ### Plugins to install
 
-- **Obsidian Web Clipper** (browser extension) — converts any webpage to Markdown and saves to your vault
-- **Dataview** — query frontmatter fields; build dynamic tables of articles by tag, date, or source count
-- **Marp** — render wiki content as slide decks directly from Obsidian
+- **`plugins/obsidian-audit/`** (this repo) — select text → add feedback → writes to `audit/`. See "Audit plugin" section below.
+- **Obsidian Web Clipper** (browser extension) — converts any webpage to Markdown and saves to your vault. Configure to save to `raw/articles/`.
+- **Dataview** (optional) — query frontmatter fields; build dynamic tables of articles by tag, date, source count.
+- **Marp** (optional) — render wiki content as slide decks directly from Obsidian.
 
 ### Graph view
 
-Graph view (Ctrl+G) is the best way to understand your wiki's shape:
-- Dense hub = a well-connected concept page
-- Isolated node = orphan page (needs inbound links or removal)
-- Cluster = a sub-topic worth a dedicated section in `CLAUDE.md`
+Graph view (`Ctrl+G`) is the best way to see your wiki's shape:
+- Dense hub = a well-connected concept page.
+- Isolated node = orphan page (needs inbound links or removal). `lint_wiki.py` flags these.
+- Cluster = a sub-topic worth a dedicated folder-split under `wiki/concepts/`.
+
+## Audit plugin — `plugins/obsidian-audit/`
+
+Installs into a local Obsidian vault. Workflow:
+
+1. Build the plugin once:
+   ```bash
+   cd plugins/obsidian-audit
+   npm install
+   npm run build
+   ```
+2. Symlink (or copy) the plugin folder into your vault:
+   ```bash
+   npm run link -- "/path/to/your/vault"
+   ```
+3. In Obsidian, enable Community Plugins, then enable "LLM Wiki Audit".
+4. In the plugin settings, set:
+   - **Wiki root** — path relative to the vault root (usually `.`).
+   - **Audit directory** — path relative to the wiki root (default `audit`).
+   - **Author** — your name.
+
+Commands (bind to hotkeys if you like):
+- **`Audit: Add feedback on selection`** — opens a modal with severity + comment → writes an audit file.
+- **`Audit: List open feedback for current file`** — shows a notice summarising open audits targeting the current file.
+- **`Audit: Open audit folder`** — reveals `audit/` in the file explorer.
+
+The plugin uses the shared `audit-shared` library, so files it writes are byte-identical in shape to files the web viewer writes.
+
+## Web viewer — `web/`
+
+Local Node.js server that renders the wiki with mermaid, KaTeX, and wikilinks, and lets you file feedback from your browser.
+
+```bash
+cd web
+npm install
+npm run build
+npm start -- --wiki "/path/to/wiki-root" --port 4175
+```
+
+Then open `http://127.0.0.1:4175`. Features:
+- Left sidebar: navigation tree built from `wiki/index.md`.
+- Main pane: rendered markdown, mermaid diagrams rendered client-side, formulas rendered server-side.
+- Right sidebar: list of open audits for the current page.
+- Select any text → "💬 Add feedback" popover appears → submit → writes an audit file to `<wiki-root>/audit/`.
+
+The server binds to `127.0.0.1` only. No auth; intended for personal use on your own machine.
 
 ## Obsidian Web Clipper usage
 
-1. Install from [obsidian.md/clipper](https://obsidian.md/clipper)
-2. Configure template to save to `raw/articles/`
-3. Clip an article → hit download-images hotkey → file is ready for ingest
+1. Install from [obsidian.md/clipper](https://obsidian.md/clipper).
+2. Configure template to save to `raw/articles/`.
+3. Clip an article → hit the download-images hotkey → file is ready for `ingest`.
 
 For complex pages (paywalled, dynamic): copy-paste the main text manually, save as `raw/articles/<slug>.md`.
 
 ## qmd (optional, for large wikis)
 
-[qmd](https://github.com/tobi/qmd) is a local semantic search engine for Markdown files with BM25 + vector hybrid search. Useful when the wiki grows beyond ~100 pages and `index.md` scanning becomes slow.
+[qmd](https://github.com/tobi/qmd) is a local semantic search engine for Markdown files with BM25 + vector hybrid search. Useful when the wiki grows beyond ~100 pages and `wiki/index.md` scanning becomes slow.
 
 ```bash
-# Install
 pip install qmd
-
-# Index your wiki
 qmd collection add wiki/ --name my-wiki
 qmd embed
-
-# Query
 qmd query "what are the tradeoffs of RAG vs wiki" --collection my-wiki
-
-# Re-index after adding pages
-qmd collection remove my-wiki && qmd collection add wiki/ --name my-wiki && qmd embed
 ```
 
-qmd also has an MCP server so LLMs can use it as a native tool instead of CLI.
+qmd also has an MCP server so LLMs can use it as a native tool.
 
 ## Marp — generating slide decks from wiki content
-
-Marp renders Markdown as presentation slides. Useful for turning wiki content into shareable presentations.
 
 ```markdown
 ---
@@ -74,44 +110,34 @@ Content here
 
 Install the Marp plugin in Obsidian to preview/export directly.
 
-## Generating charts with matplotlib
+## Generating charts
 
-For quantitative analyses, ask the LLM to generate a matplotlib script and save to `outputs/`:
+For quantitative analyses, ask the LLM to generate a matplotlib script and save to `outputs/charts/`:
 
 ```python
-# Save to outputs/charts/my-analysis.py
+# outputs/charts/my-analysis.py
 import matplotlib.pyplot as plt
 # ... chart code ...
 plt.savefig('outputs/charts/my-analysis.png')
 ```
 
-The chart can then be embedded in a wiki article: `![[my-analysis.png]]`
+Embed in a wiki article: `![[my-analysis.png]]`.
 
 ## Git workflow
 
 The wiki is a git repo. Benefits:
-- Version history for every article
-- Branching for experimental research directions
-- Collaboration: pull requests for article additions/changes
+- Version history for every article.
+- Branching for experimental research directions.
+- Audit files are tracked, so "who suggested this and when" is first-class.
 
 ```bash
-# After each work session
 git add .
-git commit -m "ingest: added 3 papers on attention mechanisms"
+git commit -m "ingest: 3 papers on attention mechanisms"
 git push
-
-# View history of a specific article
-git log --oneline wiki/concepts/RAG.md
 ```
 
-Keep large files (PDFs, raw images) in `.gitignore`. Only commit Markdown files and scripts.
+Keep large files (PDFs >10 MB, raw images at full resolution, video, model weights) in `.gitignore`. Use the raw file policy: pointer files in `raw/refs/`, not copies.
 
 ## Interactive HTML outputs
 
-For complex analyses, the LLM can generate interactive HTML with JavaScript:
-
-```
-"Generate an interactive comparison table of RAG vs LLM Wiki tradeoffs as HTML with sortable columns"
-```
-
-Save to `outputs/` and open in browser. These can also be embedded in Obsidian with the HTML plugin.
+For complex analyses, the LLM can generate interactive HTML with JavaScript and save to `outputs/`. These can be opened in a browser or embedded in Obsidian with the HTML plugin.
